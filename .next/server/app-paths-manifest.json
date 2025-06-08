@@ -1,8 +1,0 @@
-{
-  "/dashboard/page": "app/dashboard/page.js",
-  "/api/switch-database/route": "app/api/switch-database/route.js",
-  "/api/current-database/route": "app/api/current-database/route.js",
-  "/api/valuable-moments/daily/route": "app/api/valuable-moments/daily/route.js",
-  "/api/valuable-moments/route": "app/api/valuable-moments/route.js",
-  "/api/businesses/route": "app/api/businesses/route.js"
-}
