@@ -109,6 +109,7 @@ export async function getContentMetrics(businessIds: number[] | null, dateRange:
       AND cp.types IN ('PDF', 'YOUTUBE', 'CONTENT')
       AND cp.created_on >= $1 
       AND cp.created_on <= $2
+      AND cp.headline_id IS NULL
     WHERE u.user_type = 'BUSINESS'
       AND u.deleted IS NOT TRUE
       AND u.active = TRUE

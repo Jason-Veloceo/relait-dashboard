@@ -100,6 +100,7 @@ export async function GET(request: NextRequest) {
             AND types IN ('PDF', 'YOUTUBE', 'CONTENT')
             AND created_on >= $2::timestamp
             AND created_on <= $3::timestamp
+            AND headline_id IS NULL
           ORDER BY created_on DESC
         `;
         break;

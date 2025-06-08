@@ -68,6 +68,7 @@ export async function GET(request: Request) {
         FROM content_page
         WHERE created_on >= CURRENT_DATE - INTERVAL '1 day' * $1
         AND types IN ('PDF', 'YOUTUBE', 'CONTENT')
+        AND headline_id IS NULL
         ${businessFilter}
         GROUP BY DATE(created_on)
       ),
