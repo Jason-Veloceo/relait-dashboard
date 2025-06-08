@@ -1,13 +1,27 @@
 import "./globals.css";
 import { AuthProvider } from "@/lib/contexts/SimpleAuthContext";
 import ClientLayout from "@/components/ClientLayout";
+import { Metadata } from 'next';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Relait Dashboard',
   description: 'Business analytics and insights dashboard',
   icons: {
-    icon: '/favicon.ico',
-    apple: '/favicon.ico',
+    icon: [
+      { url: './icon.svg', type: 'image/svg+xml' },
+      { url: './icon.ico', type: 'image/x-icon' },
+      { url: '/favicon.ico', type: 'image/x-icon' }
+    ],
+    shortcut: [
+      { url: './icon.svg', type: 'image/svg+xml' },
+      { url: './icon.ico', type: 'image/x-icon' },
+      { url: '/favicon.ico', type: 'image/x-icon' }
+    ],
+    apple: [
+      { url: './icon.svg', type: 'image/svg+xml' },
+      { url: './icon.ico', type: 'image/x-icon' },
+      { url: '/favicon.ico', type: 'image/x-icon' }
+    ],
   },
 };
 
