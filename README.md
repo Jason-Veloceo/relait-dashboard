@@ -71,4 +71,4 @@ POSTGRES_SSL=true
 1. **Create a PostgreSQL Database:**
    - You can use Amazon RDS for PostgreSQL or any other PostgreSQL provider
    - Set up a database with appropriate users and permissions
-   - Note the connection details for your environment variables
+   - Note the connection details for your environment variables# Force rebuild Wed Aug 13 21:12:41 AWST 2025
