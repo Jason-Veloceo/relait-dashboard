@@ -27,14 +27,14 @@ export async function GET() {
       
       await pool.query('SELECT NOW()');
       await pool.end();
-    } catch (error) {
+    } catch (error: any) {
       dbError = {
-        message: error.message,
-        code: error.code,
-        errno: error.errno,
-        syscall: error.syscall,
-        address: error.address,
-        port: error.port
+        message: error?.message || 'Unknown error',
+        code: error?.code,
+        errno: error?.errno,
+        syscall: error?.syscall,
+        address: error?.address,
+        port: error?.port
       };
     }
 
@@ -59,11 +59,11 @@ export async function GET() {
         'cf-connecting-ip': undefined
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
       { 
         error: 'Failed to get debug info',
-        message: error.message,
+        message: error?.message || 'Unknown error',
         timestamp: new Date().toISOString()
       },
       { status: 500 }
