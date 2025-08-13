@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
+import { getCurrentDatabase } from '@/lib/db';
 
 export async function GET() {
   try {
-    const currentDb = process.env.ACTIVE_DB || 'UAT';
     return NextResponse.json({
       success: true,
-      database: currentDb as 'UAT' | 'PROD'
+      database: getCurrentDatabase()
     });
   } catch (error) {
     return NextResponse.json(

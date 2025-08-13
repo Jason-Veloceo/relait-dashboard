@@ -71,7 +71,7 @@ export default function BusinessDetails({ businessId }: BusinessDetailsProps) {
             content: contentData.success ? contentData.data : []
           });
         } else {
-          setError('No data available');
+          setError(`Business with ID ${businessId} not found. Please check the business ID or return to the main dashboard.`);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch metrics');
@@ -93,8 +93,16 @@ export default function BusinessDetails({ businessId }: BusinessDetailsProps) {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
-        {error}
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4">
+          {error}
+        </div>
+        <button 
+          onClick={() => window.location.href = '/dashboard'} 
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          ← Back to Dashboard
+        </button>
       </div>
     );
   }
@@ -152,7 +160,15 @@ export default function BusinessDetails({ businessId }: BusinessDetailsProps) {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-4">{metrics.businessName}</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold">{metrics.businessName}</h1>
+          <button 
+            onClick={() => window.location.href = '/dashboard'} 
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 transition-colors"
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
         <DateRangeSelector onRangeChange={setSelectedDays} initialDays={selectedDays} />
       </div>
 

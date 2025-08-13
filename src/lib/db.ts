@@ -1,58 +1,62 @@
 import { Pool } from 'pg';
+import { getGlobalDatabase, setGlobalDatabase } from './session';
 
-// Load environment variables
-const getDbConfig = () => {
-  const activeDb = process.env.ACTIVE_DB || 'UAT';
-  
-  if (activeDb === 'UAT') {
-    return {
-      host: process.env.UAT_DB_HOST,
-      user: process.env.UAT_DB_USER,
-      password: process.env.UAT_DB_PASSWORD,
-      database: process.env.UAT_DB_DATABASE,
-      port: parseInt(process.env.UAT_DB_PORT || '5432'),
-      ssl: {
-        rejectUnauthorized: false
-      }
-    };
-  } else if (activeDb === 'PROD') {
-    return {
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
-      port: parseInt(process.env.DB_PORT || '5432'),
-      ssl: {
-        rejectUnauthorized: false
-      }
-    };
+// Database configurations
+const getUATConfig = () => ({
+  host: process.env.UAT_DB_HOST,
+  user: process.env.UAT_DB_USER,
+  password: process.env.UAT_DB_PASSWORD,
+  database: process.env.UAT_DB_DATABASE,
+  port: parseInt(process.env.UAT_DB_PORT || '5432'),
+  ssl: {
+    rejectUnauthorized: false
   }
-  
-  throw new Error('Invalid database configuration');
+});
+
+const getPRODConfig = () => ({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
+  port: parseInt(process.env.DB_PORT || '5432'),
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+// Create separate pools for each database
+let uatPool: Pool | null = null;
+let prodPool: Pool | null = null;
+
+// Get current database from session or default to UAT
+const getCurrentDatabaseSetting = (): 'UAT' | 'PROD' => {
+  return getGlobalDatabase();
 };
 
-// Create a pool that we'll reuse
-let pool: Pool;
-
-// Initialize or reinitialize the pool with new configuration
-export const initializePool = () => {
-  if (pool) {
-    pool.end(); // Close existing connections
+// Get the appropriate pool based on current database setting
+const getCurrentPool = () => {
+  const currentDatabase = getCurrentDatabaseSetting();
+  if (currentDatabase === 'UAT') {
+    if (!uatPool) {
+      uatPool = new Pool(getUATConfig());
+    }
+    return uatPool;
+  } else {
+    if (!prodPool) {
+      prodPool = new Pool(getPRODConfig());
+    }
+    return prodPool;
   }
-  pool = new Pool(getDbConfig());
-  return pool;
 };
-
-// Initialize the pool with default configuration
-pool = initializePool();
 
 // Test query to verify connection
 export const testConnection = async () => {
   try {
+    const pool = getCurrentPool();
     const client = await pool.connect();
     const result = await client.query('SELECT NOW()');
     client.release();
-    return { success: true, timestamp: result.rows[0].now };
+    return { success: true, timestamp: result.rows[0].now, database: getCurrentDatabaseSetting() };
   } catch (error) {
     console.error('Database connection error:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -65,6 +69,7 @@ export async function query<T>(
   params?: any[]
 ): Promise<T[]> {
   try {
+    const pool = getCurrentPool();
     const result = await pool.query(text, params);
     return result.rows as T[];
   } catch (error) {
@@ -75,14 +80,32 @@ export async function query<T>(
 
 // Function to switch databases
 export const switchDatabase = async (database: 'UAT' | 'PROD') => {
-  process.env.ACTIVE_DB = database;
-  initializePool();
+  setGlobalDatabase(database);
   return testConnection();
 };
 
+// Get current database
+export const getCurrentDatabase = () => getCurrentDatabaseSetting();
+
 // Cleanup function for when the application stops
 export const closePool = async () => {
-  await pool.end();
+  if (uatPool) await uatPool.end();
+  if (prodPool) await prodPool.end();
+};
+
+// Default export for backward compatibility
+const pool = {
+  query: async (text: string, params?: any[]) => {
+    const currentPool = getCurrentPool();
+    return await currentPool.query(text, params);
+  },
+  connect: async () => {
+    const currentPool = getCurrentPool();
+    return await currentPool.connect();
+  },
+  end: async () => {
+    return await closePool();
+  }
 };
 
 export default pool; 

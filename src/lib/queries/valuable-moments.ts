@@ -130,9 +130,21 @@ export async function getAllValuableMoments(businessIds: number[] | null, dateRa
     getContentMetrics(businessIds, dateRange)
   ]);
 
-  // Since we're now getting all businesses from each query,
-  // we can use any of the result sets as our base list of businesses
-  return emails.map(business => {
+  // Collect all unique businesses from all result sets
+  const allBusinesses = new Map<number, { business_id: number; business_name: string }>();
+  
+  [...emails, ...questions, ...socialPosts, ...content].forEach(business => {
+    if (!allBusinesses.has(business.business_id)) {
+      allBusinesses.set(business.business_id, {
+        business_id: business.business_id,
+        business_name: business.business_name
+      });
+    }
+  });
+
+  // Convert to metrics for all businesses
+  return Array.from(allBusinesses.values()).map(business => {
+    const emailData = emails.find(e => e.business_id === business.business_id);
     const questionData = questions.find(q => q.business_id === business.business_id);
     const socialData = socialPosts.find(s => s.business_id === business.business_id);
     const contentData = content.find(c => c.business_id === business.business_id);
@@ -140,7 +152,7 @@ export async function getAllValuableMoments(businessIds: number[] | null, dateRa
     return {
       businessId: business.business_id,
       businessName: business.business_name,
-      emailsSent: business.count || 0,
+      emailsSent: emailData?.count || 0,
       questionsAnswered: questionData?.count || 0,
       socialPosts: socialData?.count || 0,
       contentAdded: contentData?.count || 0

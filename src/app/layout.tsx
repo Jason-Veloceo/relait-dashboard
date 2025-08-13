@@ -34,9 +34,7 @@ export default function RootLayout({
     <html lang="en">
       <body style={{ backgroundColor: '#F7F5FF' }}>
         <AuthProvider>
-          <ClientLayout>
-            {children}
-          </ClientLayout>
+          {children}
         </AuthProvider>
       </body>
     </html>

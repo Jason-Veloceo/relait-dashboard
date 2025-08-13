@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -17,20 +17,59 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const login = async (email: string, password: string) => {
-    if (email === 'admins@relait.com.au' && password === 'R3lait007') {
+  // Load authentication state from localStorage on mount
+  useEffect(() => {
+    const storedAuth = localStorage.getItem('isAuthenticated');
+    if (storedAuth === 'true') {
       setIsAuthenticated(true);
-      router.push('/dashboard');
-      return true;
     }
-    return false;
+    setIsLoading(false);
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setIsAuthenticated(true);
+        localStorage.setItem('isAuthenticated', 'true');
+        router.push('/dashboard');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
   };
 
   const logout = () => {
     setIsAuthenticated(false);
-    router.push('/');
+    localStorage.removeItem('isAuthenticated');
+    
+    // Clear all possible storage
+    sessionStorage.clear();
+    
+    // Prevent browser cache by adding timestamp
+    const timestamp = Date.now();
+    
+    // Replace history and redirect with cache-busting
+    window.history.replaceState(null, '', `/?logout=${timestamp}`);
+    
+    // Force immediate redirect with cache-busting
+    window.location.replace(`/?logout=${timestamp}`);
   };
 
   return (
