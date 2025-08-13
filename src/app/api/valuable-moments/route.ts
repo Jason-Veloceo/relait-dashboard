@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllValuableMoments } from '@/lib/queries/valuable-moments';
+
+export const dynamic = 'force-dynamic';
 import { subDays } from 'date-fns';
 
 export async function GET(request: NextRequest) {

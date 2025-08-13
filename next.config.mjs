@@ -21,6 +21,11 @@ const nextConfig = {
       ],
     },
   },
+  // Prevent API routes from being statically generated
+  output: 'standalone',
+  generateBuildId: async () => {
+    return 'build-' + Date.now()
+  },
 };
 
 export default nextConfig;
