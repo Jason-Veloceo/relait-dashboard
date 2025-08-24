@@ -1,30 +1,10 @@
 import { Pool } from 'pg';
 import { getGlobalDatabase, setGlobalDatabase } from './session';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore - socksjs has no types
-import SocksConnection from 'socksjs';
+import { ensureForward } from './fixieWrench';
 
-// Create a SOCKS stream factory compatible with pg using socksjs (sync Duplex)
-const createSocksStreamFactory = (host: string, port: number) => {
-  if (!process.env.FIXIE_SOCKS_HOST) return undefined;
-
-  const fixieUrl = process.env.FIXIE_SOCKS_HOST;
-  const [auth, hostPort] = fixieUrl.split('@');
-  const [username, password] = auth.split(':');
-  const [proxyHost, proxyPort] = hostPort.split(':');
-
-  const pgServer = { host, port } as const;
-  const proxy = {
-    user: username,
-    pass: password,
-    host: proxyHost,
-    port: parseInt(proxyPort, 10)
-  } as const;
-
-  // Return a factory function (no-arg) as expected by pg
-  const factory = () => new (SocksConnection as any)(pgServer, proxy);
-  return factory;
-};
+// Choose fixed local ports for UAT and PROD forwards
+const LOCAL_UAT_PORT = 15432;
+const LOCAL_PROD_PORT = 15433;
 
 // Database configurations
 const getUATConfig = () => {
@@ -40,13 +20,10 @@ const getUATConfig = () => {
   };
 
   // Add SOCKS proxy stream if Fixie is configured
-  const socksStream = createSocksStreamFactory(
-    process.env.UAT_DB_HOST || 'localhost',
-    parseInt(process.env.UAT_DB_PORT || '5432', 10)
-  );
-
-  if (socksStream) {
-    config.stream = socksStream;
+  if (process.env.FIXIE_SOCKS_HOST) {
+    // Start/ensure fixie-wrench forward and connect to localhost
+    config.host = '127.0.0.1';
+    config.port = LOCAL_UAT_PORT;
   }
 
   return config;
@@ -65,13 +42,9 @@ const getPRODConfig = () => {
   };
 
   // Add SOCKS proxy stream if Fixie is configured
-  const socksStream = createSocksStreamFactory(
-    process.env.DB_HOST || 'localhost',
-    parseInt(process.env.DB_PORT || '5432', 10)
-  );
-
-  if (socksStream) {
-    config.stream = socksStream;
+  if (process.env.FIXIE_SOCKS_HOST) {
+    config.host = '127.0.0.1';
+    config.port = LOCAL_PROD_PORT;
   }
 
   return config;
@@ -105,6 +78,15 @@ const getCurrentPool = () => {
 // Test query to verify connection
 export const testConnection = async () => {
   try {
+    // Ensure forward for the selected DB if Fixie is present
+    if (process.env.FIXIE_SOCKS_HOST) {
+      const current = getCurrentDatabaseSetting();
+      if (current === 'UAT') {
+        await ensureForward(LOCAL_UAT_PORT, process.env.UAT_DB_HOST as string, parseInt(process.env.UAT_DB_PORT || '5432', 10));
+      } else {
+        await ensureForward(LOCAL_PROD_PORT, process.env.DB_HOST as string, parseInt(process.env.DB_PORT || '5432', 10));
+      }
+    }
     const pool = getCurrentPool();
     const client = await pool.connect();
     const result = await client.query('SELECT NOW()');
@@ -122,6 +104,14 @@ export async function query<T>(
   params?: any[]
 ): Promise<T[]> {
   try {
+    if (process.env.FIXIE_SOCKS_HOST) {
+      const current = getCurrentDatabaseSetting();
+      if (current === 'UAT') {
+        await ensureForward(LOCAL_UAT_PORT, process.env.UAT_DB_HOST as string, parseInt(process.env.UAT_DB_PORT || '5432', 10));
+      } else {
+        await ensureForward(LOCAL_PROD_PORT, process.env.DB_HOST as string, parseInt(process.env.DB_PORT || '5432', 10));
+      }
+    }
     const pool = getCurrentPool();
     const result = await pool.query(text, params);
     return result.rows as T[];
