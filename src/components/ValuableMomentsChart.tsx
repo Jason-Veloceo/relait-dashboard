@@ -82,10 +82,8 @@ export default function ValuableMomentsChart({ days, selectedBusinessIds }: Valu
     if (i >= 7) sum -= totals[i - 7];
     ma7.push(i >= 6 ? sum / 7 : null);
   }
-  const maPoints = data
-    .map((d, i) => (ma7[i] == null ? null : { x: d.date, y: ma7[i] as number }))
-    .filter((p): p is { x: string; y: number } => Boolean(p));
-  const lineData = [{ id: '7-day MA', data: maPoints }];
+  // keep full x domain; use null for first 6 days
+  const lineData = [{ id: '7-day MA', data: data.map((d, i) => ({ x: d.date, y: ma7[i] as number | null })) }];
 
   return (
     <div className="bg-white p-6 rounded-lg shadow mb-8">
@@ -135,11 +133,8 @@ export default function ValuableMomentsChart({ days, selectedBusinessIds }: Valu
               xScale={{ type: 'point' }}
               yScale={{ type: 'linear', min: 0, max: 'auto' }}
               curve="monotoneX"
-              enablePoints={true}
-              pointSize={6}
-              pointColor="#ffffff"
-              pointBorderWidth={2}
-              pointBorderColor="#2563eb"
+              enablePoints={false}
+              animate={false}
               enableGridX={false}
               enableGridY={false}
               colors={['#2563eb']}
