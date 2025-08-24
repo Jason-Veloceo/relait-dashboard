@@ -73,17 +73,16 @@ export default function ValuableMomentsChart({ days, selectedBusinessIds }: Valu
     date: d.date,
     moments: d.total_moments
   }));
-
-  const lineData = [{
-    id: 'cumulative',
-    data: [
-      { x: data[0].date, y: 0 },
-      ...data.map(d => ({
-        x: d.date,
-        y: d.cumulative_total
-      }))
-    ]
-  }];
+  // Compute 7-day moving average for primary axis
+  const totals = data.map(d => d.total_moments);
+  const ma7: (number | null)[] = [];
+  let sum = 0;
+  for (let i = 0; i < totals.length; i++) {
+    sum += totals[i];
+    if (i >= 7) sum -= totals[i - 7];
+    ma7.push(i >= 6 ? sum / 7 : null);
+  }
+  const lineData = [{ id: '7-day MA', data: data.map((d, i) => ({ x: d.date, y: ma7[i] })) }];
 
   return (
     <div className="bg-white p-6 rounded-lg shadow mb-8">
@@ -125,70 +124,33 @@ export default function ValuableMomentsChart({ days, selectedBusinessIds }: Valu
           labelSkipWidth={12}
           labelSkipHeight={12}
         />
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
-          <ResponsiveLine
-            data={lineData}
-            margin={{ top: 50, right: 120, bottom: 50, left: 60 }}
-            xScale={{
-              type: 'point'
-            }}
-            yScale={{
-              type: 'linear',
-              min: 0,
-              max: 'auto'
-            }}
-            curve="monotoneX"
-            enablePoints={true}
-            pointSize={8}
-            pointColor="#ffffff"
-            pointBorderWidth={2}
-            pointBorderColor="#2563eb"
-            enableGridX={false}
-            enableGridY={false}
-            colors={['#2563eb']}
-            lineWidth={3}
-            axisTop={null}
-            axisRight={{
-              tickSize: 5,
-              tickPadding: 5,
-              tickRotation: 0,
-              format: d => Math.round(d as number).toString(),
-              legend: 'Cumulative Total',
-              legendPosition: 'middle',
-              legendOffset: 50
-            }}
-            axisBottom={null}
-            axisLeft={null}
-            isInteractive={true}
-            useMesh={true}
-            legends={[
-              {
-                anchor: 'bottom-right',
-                direction: 'column',
-                justify: false,
-                translateX: 100,
-                translateY: 0,
-                itemsSpacing: 0,
-                itemDirection: 'left-to-right',
-                itemWidth: 80,
-                itemHeight: 20,
-                itemOpacity: 0.75,
-                symbolSize: 12,
-                symbolShape: 'circle',
-                symbolBorderColor: 'rgba(0, 0, 0, .5)',
-                effects: [
-                  {
-                    on: 'hover',
-                    style: {
-                      itemBackground: 'rgba(0, 0, 0, .03)',
-                      itemOpacity: 1
-                    }
-                  }
-                ]
-              }
-            ]}
-          />
-        </div>
+        {data.length >= 7 && (
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+            <ResponsiveLine
+              data={lineData}
+              margin={{ top: 50, right: 120, bottom: 50, left: 60 }}
+              xScale={{ type: 'point' }}
+              yScale={{ type: 'linear', min: 0, max: 'auto' }}
+              curve="monotoneX"
+              enablePoints={true}
+              pointSize={6}
+              pointColor="#ffffff"
+              pointBorderWidth={2}
+              pointBorderColor="#2563eb"
+              enableGridX={false}
+              enableGridY={false}
+              colors={['#2563eb']}
+              lineWidth={3}
+              axisTop={null}
+              axisRight={null}
+              axisBottom={null}
+              axisLeft={null}
+              isInteractive={true}
+              useMesh={true}
+              legends={[]}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
