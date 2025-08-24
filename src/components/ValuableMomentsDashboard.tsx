@@ -9,7 +9,7 @@ import BusinessSelector from './filters/BusinessSelector';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import ValuableMomentsChart from './ValuableMomentsChart';
 
-type SortField = 'businessName' | 'emailsSent' | 'questionsAnswered' | 'socialPosts' | 'contentAdded';
+type SortField = 'businessName' | 'emailsSent' | 'socialPosts' | 'questionsAnswered' | 'contentAdded' | 'totalVM';
 type SortDirection = 'asc' | 'desc';
 
 export default function ValuableMomentsDashboard() {
@@ -153,28 +153,12 @@ export default function ValuableMomentsDashboard() {
                 </th>
                 <th 
                   scope="col" 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Total VM
-                </th>
-                <th 
-                  scope="col" 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                   onClick={() => handleSort('emailsSent')}
                 >
                   <div className="flex items-center space-x-1">
                     <span>Emails Sent</span>
                     {getSortIcon('emailsSent')}
-                  </div>
-                </th>
-                <th 
-                  scope="col" 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('questionsAnswered')}
-                >
-                  <div className="flex items-center space-x-1">
-                    <span>Questions Answered</span>
-                    {getSortIcon('questionsAnswered')}
                   </div>
                 </th>
                 <th 
@@ -190,11 +174,31 @@ export default function ValuableMomentsDashboard() {
                 <th 
                   scope="col" 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('questionsAnswered')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Questions Answered</span>
+                    {getSortIcon('questionsAnswered')}
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                   onClick={() => handleSort('contentAdded')}
                 >
                   <div className="flex items-center space-x-1">
                     <span>Content Added</span>
                     {getSortIcon('contentAdded')}
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('totalVM')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Total VM</span>
+                    {getSortIcon('totalVM')}
                   </div>
                 </th>
               </tr>

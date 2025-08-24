@@ -2,7 +2,6 @@
 
 import { ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import DatabaseSelector from '@/components/DatabaseSelector';
 import { useAuth } from '@/lib/contexts/SimpleAuthContext';
 
 interface ClientLayoutProps {
@@ -26,13 +25,6 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
             Relait Dashboard
           </h1>
           <div className="flex items-center space-x-4">
-            <DatabaseSelector 
-              onDatabaseChange={() => {
-                // DatabaseSelector handles the POST; simply reload to refresh data
-                window.location.reload();
-              }}
-            />
-            
             {/* User Menu */}
             <button
               onClick={handleLogout}
