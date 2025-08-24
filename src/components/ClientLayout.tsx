@@ -27,26 +27,9 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           </h1>
           <div className="flex items-center space-x-4">
             <DatabaseSelector 
-              onDatabaseChange={async (database) => {
-                try {
-                  const response = await fetch('/api/switch-database', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ database }),
-                  });
-                  
-                  if (!response.ok) {
-                    throw new Error('Failed to switch database');
-                  }
-                  
-                  // Force a complete page reload to refresh all data
-                  window.location.reload();
-                } catch (error) {
-                  console.error('Error switching database:', error);
-                  alert('Failed to switch database. Please try again.');
-                }
+              onDatabaseChange={() => {
+                // DatabaseSelector handles the POST; simply reload to refresh data
+                window.location.reload();
               }}
             />
             

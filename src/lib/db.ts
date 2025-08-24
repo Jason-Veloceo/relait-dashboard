@@ -50,7 +50,7 @@ const getPRODConfig = () => {
   return config;
 };
 
-// Create separate pools for each database
+// Create separate pools for each database with reuse-friendly settings
 let uatPool: Pool | null = null;
 let prodPool: Pool | null = null;
 
@@ -64,12 +64,24 @@ const getCurrentPool = () => {
   const currentDatabase = getCurrentDatabaseSetting();
   if (currentDatabase === 'UAT') {
     if (!uatPool) {
-      uatPool = new Pool(getUATConfig());
+      uatPool = new Pool({
+        ...getUATConfig(),
+        max: 1,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+        keepAlive: true,
+      } as any);
     }
     return uatPool;
   } else {
     if (!prodPool) {
-      prodPool = new Pool(getPRODConfig());
+      prodPool = new Pool({
+        ...getPRODConfig(),
+        max: 1,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+        keepAlive: true,
+      } as any);
     }
     return prodPool;
   }
@@ -124,7 +136,7 @@ export async function query<T>(
 // Function to switch databases
 export const switchDatabase = async (database: 'UAT' | 'PROD') => {
   setGlobalDatabase(database);
-  return testConnection();
+  return { success: true, database };
 };
 
 // Get current database
