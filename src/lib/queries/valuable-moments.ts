@@ -24,7 +24,7 @@ export async function getEmailMetrics(businessIds: number[] | null, dateRange: D
     `SELECT 
       u.id as business_id,
       u.business_name,
-      COUNT(e.id) as count
+      COUNT(e.id)::int as count
     FROM users u
     LEFT JOIN emails e ON e.business_id = u.id
       AND e.created_on >= $1 
@@ -50,7 +50,7 @@ export async function getQuestionsMetrics(businessIds: number[] | null, dateRang
     `SELECT 
       u.id as business_id,
       u.business_name,
-      COUNT(q.id) as count
+      COUNT(q.id)::int as count
     FROM users u
     LEFT JOIN questions q ON q.business_id = u.id
       AND q.status = 'ANSWERED'
@@ -77,7 +77,7 @@ export async function getSocialPostMetrics(businessIds: number[] | null, dateRan
     `SELECT 
       u.id as business_id,
       u.business_name,
-      COUNT(sp.id) as count
+      COUNT(sp.id)::int as count
     FROM users u
     LEFT JOIN social_post sp ON sp.business_id = u.id
       AND sp.status = 'POSTED'
@@ -104,7 +104,7 @@ export async function getContentMetrics(businessIds: number[] | null, dateRange:
     `SELECT 
       u.id as business_id,
       u.business_name,
-      COUNT(cp.id) as count
+      COUNT(cp.id)::int as count
     FROM users u
     LEFT JOIN content_page cp ON cp.business_id = u.id
       AND cp.types IN ('PDF', 'YOUTUBE', 'CONTENT')
