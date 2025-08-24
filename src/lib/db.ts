@@ -1,35 +1,29 @@
 import { Pool } from 'pg';
 import { getGlobalDatabase, setGlobalDatabase } from './session';
-import { SocksClient } from 'socks';
-import * as net from 'net';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - socksjs has no types
+import SocksConnection from 'socksjs';
 
-// Create custom connection function for SOCKS proxy
-const createConnectionWithProxy = (host: string, port: number) => {
-  if (process.env.FIXIE_SOCKS_HOST) {
-    // Parse FIXIE_SOCKS_HOST format: username:password@host:port
-    const fixieUrl = process.env.FIXIE_SOCKS_HOST;
-    const [auth, hostPort] = fixieUrl.split('@');
-    const [username, password] = auth.split(':');
-    const [proxyHost, proxyPort] = hostPort.split(':');
-    
-    return () => {
-      return SocksClient.createConnection({
-        proxy: {
-          host: proxyHost,
-          port: parseInt(proxyPort),
-          type: 5,
-          userId: username,
-          password: password
-        },
-        command: 'connect',
-        destination: {
-          host: host,
-          port: port
-        }
-      }).then(info => info.socket);
-    };
-  }
-  return undefined;
+// Create a SOCKS stream compatible with pg using socksjs (sync Duplex)
+const createSocksStream = (host: string, port: number) => {
+  if (!process.env.FIXIE_SOCKS_HOST) return undefined;
+
+  const fixieUrl = process.env.FIXIE_SOCKS_HOST;
+  const [auth, hostPort] = fixieUrl.split('@');
+  const [username, password] = auth.split(':');
+  const [proxyHost, proxyPort] = hostPort.split(':');
+
+  const pgServer = { host, port } as const;
+  const proxy = {
+    user: username,
+    pass: password,
+    host: proxyHost,
+    port: parseInt(proxyPort, 10)
+  } as const;
+
+  // socksjs returns a Duplex stream immediately
+  const socket = new (SocksConnection as any)(pgServer, proxy);
+  return socket;
 };
 
 // Database configurations
@@ -46,13 +40,13 @@ const getUATConfig = () => {
   };
 
   // Add SOCKS proxy stream if Fixie is configured
-  const proxyConnection = createConnectionWithProxy(
+  const socksStream = createSocksStream(
     process.env.UAT_DB_HOST || 'localhost',
-    parseInt(process.env.UAT_DB_PORT || '5432')
+    parseInt(process.env.UAT_DB_PORT || '5432', 10)
   );
-  
-  if (proxyConnection) {
-    config.stream = proxyConnection;
+
+  if (socksStream) {
+    config.stream = socksStream;
   }
 
   return config;
@@ -71,13 +65,13 @@ const getPRODConfig = () => {
   };
 
   // Add SOCKS proxy stream if Fixie is configured
-  const proxyConnection = createConnectionWithProxy(
+  const socksStream = createSocksStream(
     process.env.DB_HOST || 'localhost',
-    parseInt(process.env.DB_PORT || '5432')
+    parseInt(process.env.DB_PORT || '5432', 10)
   );
-  
-  if (proxyConnection) {
-    config.stream = proxyConnection;
+
+  if (socksStream) {
+    config.stream = socksStream;
   }
 
   return config;

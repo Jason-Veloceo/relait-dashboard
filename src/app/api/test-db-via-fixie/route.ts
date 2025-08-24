@@ -2,7 +2,9 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { Pool } from 'pg';
-import { SocksClient } from 'socks';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - socksjs has no types
+import SocksConnection from 'socksjs';
 
 export async function GET() {
   try {
@@ -33,23 +35,13 @@ export async function GET() {
         rejectUnauthorized: false
       },
       connectionTimeoutMillis: 15000, // 15 second timeout
-      // Add SOCKS proxy stream
-      stream: () => {
-        return SocksClient.createConnection({
-          proxy: {
-            host: proxyHost,
-            port: parseInt(proxyPort),
-            type: 5,
-            userId: username,
-            password: password
-          },
-          command: 'connect',
-          destination: {
-            host: dbHost!,
-            port: dbPort
-          }
-        }).then(info => info.socket);
-      }
+      // Add SOCKS proxy stream (sync Duplex)
+      stream: new (SocksConnection as any)({ host: dbHost!, port: dbPort }, {
+        user: username,
+        pass: password,
+        host: proxyHost,
+        port: parseInt(proxyPort, 10)
+      })
     };
 
     const pool = new Pool(config);
