@@ -21,8 +21,8 @@ export default function ValuableMomentsDashboard() {
   const [avgVM, setAvgVM] = useState<number>(0);
   const [selectedDays, setSelectedDays] = useState(30);
   const [selectedBusinessIds, setSelectedBusinessIds] = useState<number[]>([]);
-  const [sortField, setSortField] = useState<SortField>('businessName');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [sortField, setSortField] = useState<SortField>('totalVM');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Fetch businesses
   useEffect(() => {

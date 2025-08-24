@@ -132,6 +132,7 @@ export default function ValuableMomentsChart({ days, selectedBusinessIds }: Valu
               margin={{ top: 50, right: 120, bottom: 50, left: 60 }}
               xScale={{ type: 'point' }}
               yScale={{ type: 'linear', min: 0, max: 'auto' }}
+              yFormat={value => (value == null ? '' : (value as number).toFixed(1))}
               curve="monotoneX"
               enablePoints={false}
               animate={false}
