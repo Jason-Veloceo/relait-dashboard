@@ -25,7 +25,10 @@ export async function GET(request: NextRequest) {
       endDate
     });
 
-    return NextResponse.json({ success: true, data: metrics });
+    const totalVMAll = metrics.reduce((sum, m) => sum + (m.totalVM || 0), 0);
+    const avgVMPerCompany = metrics.length ? totalVMAll / metrics.length : 0;
+
+    return NextResponse.json({ success: true, data: metrics, totals: { totalVMAll, avgVMPerCompany } });
   } catch (error) {
     console.error('Error fetching valuable moments:', error);
     return NextResponse.json(

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Business } from '@/lib/queries/business';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -13,6 +13,23 @@ export default function BusinessSelector({ businesses, onSelectionChange }: Busi
   const [selectedBusinessIds, setSelectedBusinessIds] = useState<number[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Restore from localStorage or default to ALL
+  useEffect(() => {
+    const key = 'vm:selectedBusinesses';
+    const stored = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as number[];
+        setSelectedBusinessIds(parsed);
+        onSelectionChange(parsed);
+        return;
+      } catch {}
+    }
+    const all = businesses.map(b => b.id);
+    setSelectedBusinessIds(all);
+    onSelectionChange(all);
+  }, [businesses]);
+
   const handleBusinessToggle = (businessId: number) => {
     const newSelection = selectedBusinessIds.includes(businessId)
       ? selectedBusinessIds.filter(id => id !== businessId)
@@ -20,6 +37,20 @@ export default function BusinessSelector({ businesses, onSelectionChange }: Busi
     
     setSelectedBusinessIds(newSelection);
     onSelectionChange(newSelection);
+    try { localStorage.setItem('vm:selectedBusinesses', JSON.stringify(newSelection)); } catch {}
+  };
+
+  const handleSelectAll = () => {
+    const all = businesses.map(b => b.id);
+    setSelectedBusinessIds(all);
+    onSelectionChange(all);
+    try { localStorage.setItem('vm:selectedBusinesses', JSON.stringify(all)); } catch {}
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedBusinessIds([]);
+    onSelectionChange([]);
+    try { localStorage.setItem('vm:selectedBusinesses', JSON.stringify([])); } catch {}
   };
 
   return (
@@ -34,6 +65,10 @@ export default function BusinessSelector({ businesses, onSelectionChange }: Busi
       
       {isExpanded && (
         <div className="mt-2 p-2 bg-white border border-gray-300 rounded-md max-h-60 overflow-y-auto">
+          <div className="flex items-center justify-between px-2 pb-2">
+            <button onClick={handleSelectAll} className="text-xs text-blue-600 hover:underline">Select all</button>
+            <button onClick={handleDeselectAll} className="text-xs text-blue-600 hover:underline">Deselect all</button>
+          </div>
           {businesses.map((business) => (
             <label
               key={business.id}

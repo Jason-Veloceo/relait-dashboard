@@ -7,6 +7,7 @@ export interface ValuableMomentMetrics {
   questionsAnswered: number;
   socialPosts: number;
   contentAdded: number;
+  totalVM: number;
 }
 
 export interface DateRange {
@@ -149,13 +150,19 @@ export async function getAllValuableMoments(businessIds: number[] | null, dateRa
     const socialData = socialPosts.find(s => s.business_id === business.business_id);
     const contentData = content.find(c => c.business_id === business.business_id);
 
+    const emailsSent = emailData?.count || 0;
+    const questionsAnswered = questionData?.count || 0;
+    const socialPostsCount = socialData?.count || 0;
+    const contentAdded = contentData?.count || 0;
+
     return {
       businessId: business.business_id,
       businessName: business.business_name,
-      emailsSent: emailData?.count || 0,
-      questionsAnswered: questionData?.count || 0,
-      socialPosts: socialData?.count || 0,
-      contentAdded: contentData?.count || 0
+      emailsSent,
+      questionsAnswered,
+      socialPosts: socialPostsCount,
+      contentAdded,
+      totalVM: emailsSent + questionsAnswered + socialPostsCount + contentAdded
     };
   });
 } 

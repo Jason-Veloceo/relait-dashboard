@@ -18,6 +18,7 @@ export default function ValuableMomentsDashboard() {
   const [metrics, setMetrics] = useState<ValuableMomentMetrics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [avgVM, setAvgVM] = useState<number>(0);
   const [selectedDays, setSelectedDays] = useState(30);
   const [selectedBusinessIds, setSelectedBusinessIds] = useState<number[]>([]);
   const [sortField, setSortField] = useState<SortField>('businessName');
@@ -55,6 +56,7 @@ export default function ValuableMomentsDashboard() {
         const data = await response.json();
         if (data.success) {
           setMetrics(data.data);
+          if (data.totals) setAvgVM(data.totals.avgVMPerCompany);
         } else {
           setError(data.error || 'Failed to fetch metrics');
         }
@@ -103,6 +105,16 @@ export default function ValuableMomentsDashboard() {
         />
       </div>
 
+      {/* KPI */}
+      {!loading && !error && (
+        <div className="mb-4">
+          <div className="inline-block bg-white rounded-md shadow px-4 py-3">
+            <div className="text-xs text-gray-500">Avg valuable moments / company</div>
+            <div className="text-xl font-semibold">{avgVM.toFixed(1)}</div>
+          </div>
+        </div>
+      )}
+
       {/* Chart */}
       <ValuableMomentsChart 
         days={selectedDays}
@@ -138,6 +150,12 @@ export default function ValuableMomentsDashboard() {
                     <span>Business Name</span>
                     {getSortIcon('businessName')}
                   </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Total VM
                 </th>
                 <th 
                   scope="col" 
@@ -199,6 +217,7 @@ export default function ValuableMomentsDashboard() {
                   <td className="px-6 py-4 whitespace-nowrap">{metric.questionsAnswered}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.socialPosts}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.contentAdded}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{metric.totalVM}</td>
                 </tr>
               ))}
             </tbody>
