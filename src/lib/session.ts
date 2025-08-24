@@ -1,29 +1,28 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import { cookies } from 'next/headers';
 
-// File-based database selection storage
-const DB_STATE_FILE = path.join(process.cwd(), '.database-state');
-
-// Read database selection from file
+// Use cookies to persist database selection across serverless invocations
 export const getGlobalDatabase = (): 'UAT' | 'PROD' => {
   try {
-    if (fs.existsSync(DB_STATE_FILE)) {
-      const data = fs.readFileSync(DB_STATE_FILE, 'utf8').trim();
-      if (data === 'UAT' || data === 'PROD') {
-        return data;
-      }
-    }
+    const cookieStore = cookies();
+    const value = cookieStore.get('database')?.value as 'UAT' | 'PROD' | undefined;
+    if (value === 'UAT' || value === 'PROD') return value;
   } catch (error) {
-    console.warn('Failed to read database state file:', error);
+    console.warn('Failed to read database cookie:', error);
   }
-  return 'UAT'; // Default to UAT
+  return 'UAT';
 };
 
-// Write database selection to file
 export const setGlobalDatabase = (database: 'UAT' | 'PROD') => {
   try {
-    fs.writeFileSync(DB_STATE_FILE, database, 'utf8');
+    const cookieStore = cookies();
+    cookieStore.set('database', database, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
   } catch (error) {
-    console.error('Failed to write database state file:', error);
+    console.error('Failed to set database cookie:', error);
   }
 };
