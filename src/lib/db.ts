@@ -1,51 +1,28 @@
 import { Pool } from 'pg';
 import { getGlobalDatabase, setGlobalDatabase } from './session';
-import { SocksProxyAgent } from 'socks-proxy-agent';
-
-// Create SOCKS proxy agent if Fixie is configured
-const createProxyAgent = () => {
-  if (process.env.FIXIE_SOCKS_HOST) {
-    return new SocksProxyAgent(`socks5://${process.env.FIXIE_SOCKS_HOST}`);
-  }
-  return undefined;
-};
 
 // Database configurations
-const getUATConfig = () => {
-  const agent = createProxyAgent();
-  return {
-    host: process.env.UAT_DB_HOST,
-    user: process.env.UAT_DB_USER,
-    password: process.env.UAT_DB_PASSWORD,
-    database: process.env.UAT_DB_DATABASE,
-    port: parseInt(process.env.UAT_DB_PORT || '5432'),
-    ssl: {
-      rejectUnauthorized: false
-    },
-    // Add proxy agent for Fixie if available
-    ...(agent && { 
-      stream: (port: number, host: string) => agent.createConnection({ port, host })
-    })
-  };
-};
+const getUATConfig = () => ({
+  host: process.env.UAT_DB_HOST,
+  user: process.env.UAT_DB_USER,
+  password: process.env.UAT_DB_PASSWORD,
+  database: process.env.UAT_DB_DATABASE,
+  port: parseInt(process.env.UAT_DB_PORT || '5432'),
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
-const getPRODConfig = () => {
-  const agent = createProxyAgent();
-  return {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE,
-    port: parseInt(process.env.DB_PORT || '5432'),
-    ssl: {
-      rejectUnauthorized: false
-    },
-    // Add proxy agent for Fixie if available
-    ...(agent && { 
-      stream: (port: number, host: string) => agent.createConnection({ port, host })
-    })
-  };
-};
+const getPRODConfig = () => ({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
+  port: parseInt(process.env.DB_PORT || '5432'),
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
 // Create separate pools for each database
 let uatPool: Pool | null = null;
