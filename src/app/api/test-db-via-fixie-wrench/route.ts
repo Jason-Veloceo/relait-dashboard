@@ -64,7 +64,8 @@ export async function GET() {
 
     // Pick an ephemeral local port
     const localPort = 12345 + Math.floor(Math.random() * 1000);
-    const args = [ `${localPort}:${dbHost}:${dbPort}`, '-v' ];
+    // Flags must come before positional args for fixie-wrench
+    const args = [ '-v', `${localPort}:${dbHost}:${dbPort}` ];
 
     const child = spawn(bin, args, {
       env: { ...process.env, FIXIE_SOCKS_HOST: fixie },
