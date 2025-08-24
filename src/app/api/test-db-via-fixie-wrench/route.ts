@@ -79,8 +79,21 @@ export async function GET() {
     let killed = false;
     const killChild = () => { if (!killed) { killed = true; try { child.kill('SIGTERM'); } catch {} } };
 
-    // Wait for forward to open
-    await waitForPortOpen(localPort, 8000);
+    // Wait for forward to open (give it more time)
+    try {
+      await waitForPortOpen(localPort, 20000);
+    } catch (e) {
+      // If the forward never opened, include logs to help diagnose
+      const err = e as Error;
+      try { child.kill('SIGTERM'); } catch {}
+      return NextResponse.json({
+        success: false,
+        method: 'fixie-wrench',
+        error: err.message,
+        note: 'Forward did not open in time; see fixie-wrench logs',
+        logs: { stdout, stderr }
+      });
+    }
 
     // Connect via local forward
     const client = new Client({
