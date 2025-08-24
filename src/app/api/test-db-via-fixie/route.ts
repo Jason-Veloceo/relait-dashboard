@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { Client } from 'pg';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - socksjs has no types
 import SocksConnection from 'socksjs';
@@ -35,7 +35,9 @@ export async function GET() {
       ssl: {
         rejectUnauthorized: false
       },
-      connectionTimeoutMillis: 15000, // 15 second timeout
+      // Timeouts
+      statement_timeout: 10000,
+      query_timeout: 10000,
       // Add SOCKS proxy stream (factory function returning Duplex)
       stream: () => new (SocksConnection as any)({ host: dbHost!, port: dbPort }, {
         user: username,
@@ -45,13 +47,12 @@ export async function GET() {
       })
     };
 
-    const pool = new Pool(config);
+    const client = new Client(config as any);
     
     try {
-      const client = await pool.connect();
+      await client.connect();
       const result = await client.query('SELECT NOW() as current_time, version() as db_version, inet_server_addr() as server_ip');
-      client.release();
-      await pool.end();
+      await client.end();
 
       return NextResponse.json({
         success: true,
@@ -69,7 +70,7 @@ export async function GET() {
       });
 
     } catch (dbError: any) {
-      await pool.end();
+      try { await client.end(); } catch {}
       return NextResponse.json({
         success: false,
         error: 'Database connection via Fixie failed',
