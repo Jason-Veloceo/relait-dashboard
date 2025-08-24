@@ -1,28 +1,87 @@
 import { Pool } from 'pg';
 import { getGlobalDatabase, setGlobalDatabase } from './session';
+import { SocksClient } from 'socks';
+import * as net from 'net';
+
+// Create custom connection function for SOCKS proxy
+const createConnectionWithProxy = (host: string, port: number) => {
+  if (process.env.FIXIE_SOCKS_HOST) {
+    // Parse FIXIE_SOCKS_HOST format: username:password@host:port
+    const fixieUrl = process.env.FIXIE_SOCKS_HOST;
+    const [auth, hostPort] = fixieUrl.split('@');
+    const [username, password] = auth.split(':');
+    const [proxyHost, proxyPort] = hostPort.split(':');
+    
+    return () => {
+      return SocksClient.createConnection({
+        proxy: {
+          host: proxyHost,
+          port: parseInt(proxyPort),
+          type: 5,
+          userId: username,
+          password: password
+        },
+        command: 'connect',
+        destination: {
+          host: host,
+          port: port
+        }
+      }).then(info => info.socket);
+    };
+  }
+  return undefined;
+};
 
 // Database configurations
-const getUATConfig = () => ({
-  host: process.env.UAT_DB_HOST,
-  user: process.env.UAT_DB_USER,
-  password: process.env.UAT_DB_PASSWORD,
-  database: process.env.UAT_DB_DATABASE,
-  port: parseInt(process.env.UAT_DB_PORT || '5432'),
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+const getUATConfig = () => {
+  const config: any = {
+    host: process.env.UAT_DB_HOST,
+    user: process.env.UAT_DB_USER,
+    password: process.env.UAT_DB_PASSWORD,
+    database: process.env.UAT_DB_DATABASE,
+    port: parseInt(process.env.UAT_DB_PORT || '5432'),
+    ssl: {
+      rejectUnauthorized: false
+    }
+  };
 
-const getPRODConfig = () => ({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  port: parseInt(process.env.DB_PORT || '5432'),
-  ssl: {
-    rejectUnauthorized: false
+  // Add SOCKS proxy stream if Fixie is configured
+  const proxyConnection = createConnectionWithProxy(
+    process.env.UAT_DB_HOST || 'localhost',
+    parseInt(process.env.UAT_DB_PORT || '5432')
+  );
+  
+  if (proxyConnection) {
+    config.stream = proxyConnection;
   }
-});
+
+  return config;
+};
+
+const getPRODConfig = () => {
+  const config: any = {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE,
+    port: parseInt(process.env.DB_PORT || '5432'),
+    ssl: {
+      rejectUnauthorized: false
+    }
+  };
+
+  // Add SOCKS proxy stream if Fixie is configured
+  const proxyConnection = createConnectionWithProxy(
+    process.env.DB_HOST || 'localhost',
+    parseInt(process.env.DB_PORT || '5432')
+  );
+  
+  if (proxyConnection) {
+    config.stream = proxyConnection;
+  }
+
+  return config;
+};
 
 // Create separate pools for each database
 let uatPool: Pool | null = null;
