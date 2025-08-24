@@ -35,8 +35,8 @@ export async function GET() {
         rejectUnauthorized: false
       },
       connectionTimeoutMillis: 15000, // 15 second timeout
-      // Add SOCKS proxy stream (sync Duplex)
-      stream: new (SocksConnection as any)({ host: dbHost!, port: dbPort }, {
+      // Add SOCKS proxy stream (factory function returning Duplex)
+      stream: () => new (SocksConnection as any)({ host: dbHost!, port: dbPort }, {
         user: username,
         pass: password,
         host: proxyHost,

@@ -4,8 +4,8 @@ import { getGlobalDatabase, setGlobalDatabase } from './session';
 // @ts-ignore - socksjs has no types
 import SocksConnection from 'socksjs';
 
-// Create a SOCKS stream compatible with pg using socksjs (sync Duplex)
-const createSocksStream = (host: string, port: number) => {
+// Create a SOCKS stream factory compatible with pg using socksjs (sync Duplex)
+const createSocksStreamFactory = (host: string, port: number) => {
   if (!process.env.FIXIE_SOCKS_HOST) return undefined;
 
   const fixieUrl = process.env.FIXIE_SOCKS_HOST;
@@ -21,9 +21,9 @@ const createSocksStream = (host: string, port: number) => {
     port: parseInt(proxyPort, 10)
   } as const;
 
-  // socksjs returns a Duplex stream immediately
-  const socket = new (SocksConnection as any)(pgServer, proxy);
-  return socket;
+  // Return a factory function (no-arg) as expected by pg
+  const factory = () => new (SocksConnection as any)(pgServer, proxy);
+  return factory;
 };
 
 // Database configurations
@@ -40,7 +40,7 @@ const getUATConfig = () => {
   };
 
   // Add SOCKS proxy stream if Fixie is configured
-  const socksStream = createSocksStream(
+  const socksStream = createSocksStreamFactory(
     process.env.UAT_DB_HOST || 'localhost',
     parseInt(process.env.UAT_DB_PORT || '5432', 10)
   );
@@ -65,7 +65,7 @@ const getPRODConfig = () => {
   };
 
   // Add SOCKS proxy stream if Fixie is configured
-  const socksStream = createSocksStream(
+  const socksStream = createSocksStreamFactory(
     process.env.DB_HOST || 'localhost',
     parseInt(process.env.DB_PORT || '5432', 10)
   );
