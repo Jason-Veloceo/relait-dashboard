@@ -82,7 +82,10 @@ export default function ValuableMomentsChart({ days, selectedBusinessIds }: Valu
     if (i >= 7) sum -= totals[i - 7];
     ma7.push(i >= 6 ? sum / 7 : null);
   }
-  const lineData = [{ id: '7-day MA', data: data.map((d, i) => ({ x: d.date, y: ma7[i] })) }];
+  const maPoints = data
+    .map((d, i) => (ma7[i] == null ? null : { x: d.date, y: ma7[i] as number }))
+    .filter((p): p is { x: string; y: number } => Boolean(p));
+  const lineData = [{ id: '7-day MA', data: maPoints }];
 
   return (
     <div className="bg-white p-6 rounded-lg shadow mb-8">

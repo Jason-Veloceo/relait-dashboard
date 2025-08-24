@@ -84,11 +84,11 @@ export async function GET(request: Request) {
       )
       SELECT 
         TO_CHAR(date, 'YYYY-MM-DD') as date,
-        total_moments,
-        SUM(total_moments) OVER (
+        total_moments::int as total_moments,
+        (SUM(total_moments) OVER (
           ORDER BY date ASC 
           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-        ) as cumulative_total
+        ))::int as cumulative_total
       FROM daily_totals
       ORDER BY date ASC;
     `;
