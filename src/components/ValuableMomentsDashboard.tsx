@@ -218,8 +218,8 @@ export default function ValuableMomentsDashboard() {
                     </button>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.emailsSent}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{metric.questionsAnswered}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.socialPosts}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{metric.questionsAnswered}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.contentAdded}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.totalVM}</td>
                 </tr>
