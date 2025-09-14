@@ -27,6 +27,7 @@ export async function getEmailMetrics(businessIds: number[] | null, dateRange: D
       COUNT(e.id)::int as count
     FROM users u
     LEFT JOIN emails e ON e.business_id = u.id
+      AND e.status = 'SENT'
       AND e.created_on >= $1 
       AND e.created_on <= $2
     WHERE u.user_type = 'BUSINESS'

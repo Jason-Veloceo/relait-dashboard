@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
             AND u.user_type = 'BUSINESS'
             AND u.deleted IS NOT TRUE
             AND u.active = TRUE
+            AND e.status = 'SENT'
             AND e.created_on >= $2::timestamp
             AND e.created_on <= $3::timestamp
           ORDER BY e.created_on DESC
