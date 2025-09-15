@@ -197,7 +197,7 @@ export default function ValuableMomentsDashboard() {
                   onClick={() => handleSort('draftAnnouncements')}
                 >
                   <div className="flex items-center space-x-1">
-                    <span>Draft Announcements</span>
+                    <span>Draft ANCMTS</span>
                     {getSortIcon('draftAnnouncements')}
                   </div>
                 </th>
