@@ -6,20 +6,30 @@ import * as net from 'net';
 type ForwardKey = `${string}:${number}`; // remoteHost:remotePort
 
 const forwards: Map<string, { child: ChildProcess; localPort: number; ready: Promise<void> }> = new Map();
+let binaryReady: Promise<string> | null = null;
 
 async function ensureFixieWrenchBinary(): Promise<string> {
-  const binPath = path.join('/tmp', 'fixie-wrench');
-  try {
-    await fs.promises.access(binPath, fs.constants.X_OK);
-    return binPath;
-  } catch {}
-  const url = 'https://github.com/usefixie/fixie-wrench/releases/latest/download/fixie-wrench-linux-amd64';
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to download fixie-wrench: ${res.status}`);
-  const buf = Buffer.from(await res.arrayBuffer());
-  await fs.promises.writeFile(binPath, buf);
-  await fs.promises.chmod(binPath, 0o755);
-  return binPath;
+  if (!binaryReady) {
+    binaryReady = (async () => {
+      const binPath = path.join('/tmp', 'fixie-wrench');
+      try {
+        await fs.promises.access(binPath, fs.constants.X_OK);
+        return binPath;
+      } catch {}
+
+      const url = 'https://github.com/usefixie/fixie-wrench/releases/latest/download/fixie-wrench-linux-amd64';
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Failed to download fixie-wrench: ${res.status}`);
+      const buf = Buffer.from(await res.arrayBuffer());
+
+      const tmpPath = `${binPath}.tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      await fs.promises.writeFile(tmpPath, buf);
+      await fs.promises.chmod(tmpPath, 0o755);
+      await fs.promises.rename(tmpPath, binPath);
+      return binPath;
+    })();
+  }
+  return binaryReady;
 }
 
 function waitForLocalPort(port: number, timeoutMs: number): Promise<void> {
@@ -51,10 +61,20 @@ export async function ensureForward(localPort: number, remoteHost: string, remot
 
   const bin = await ensureFixieWrenchBinary();
   const args = ['-v', `${localPort}:${remoteHost}:${remotePort}`];
-  const child = spawn(bin, args, {
-    env: { ...process.env },
-    stdio: ['ignore', 'pipe', 'pipe']
-  });
+
+  const spawnWithRetry = async (retries = 3): Promise<ChildProcess> => {
+    try {
+      return spawn(bin, args, { env: { ...process.env }, stdio: ['ignore', 'pipe', 'pipe'] });
+    } catch (err: any) {
+      if (retries > 0 && (err?.code === 'ETXTBSY' || /text busy/i.test(String(err?.message)))) {
+        await new Promise(r => setTimeout(r, 300));
+        return spawnWithRetry(retries - 1);
+      }
+      throw err;
+    }
+  };
+
+  const child = await spawnWithRetry();
 
   const ready = waitForLocalPort(localPort, 20000);
   forwards.set(key, { child, localPort, ready });
