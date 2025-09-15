@@ -9,7 +9,7 @@ import BusinessSelector from './filters/BusinessSelector';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import ValuableMomentsChart from './ValuableMomentsChart';
 
-type SortField = 'businessName' | 'emailsSent' | 'socialPosts' | 'questionsAnswered' | 'contentAdded' | 'totalVM';
+type SortField = 'businessName' | 'emailsSent' | 'socialPosts' | 'questionsAnswered' | 'contentAdded' | 'totalVM' | 'psAnnouncements';
 type SortDirection = 'asc' | 'desc';
 
 export default function ValuableMomentsDashboard() {
@@ -201,6 +201,16 @@ export default function ValuableMomentsDashboard() {
                     {getSortIcon('totalVM')}
                   </div>
                 </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('psAnnouncements')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>PS ANCMTS</span>
+                    {getSortIcon('psAnnouncements')}
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -222,6 +232,7 @@ export default function ValuableMomentsDashboard() {
                   <td className="px-6 py-4 whitespace-nowrap">{metric.questionsAnswered}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.contentAdded}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.totalVM}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{metric.psAnnouncements}</td>
                 </tr>
               ))}
             </tbody>

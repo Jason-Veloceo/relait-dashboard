@@ -7,6 +7,7 @@ export interface ValuableMomentMetrics {
   questionsAnswered: number;
   socialPosts: number;
   contentAdded: number;
+  psAnnouncements: number;
   totalVM: number;
 }
 
@@ -124,18 +125,49 @@ export async function getContentMetrics(businessIds: number[] | null, dateRange:
   );
 }
 
+export async function getPSAnnouncementsMetrics(businessIds: number[] | null, dateRange: DateRange) {
+  const businessFilter = businessIds?.length 
+    ? 'AND u.id = ANY($3)'
+    : '';
+
+  return query<{ business_id: number; business_name: string; count: number }>(
+    `SELECT 
+      u.id as business_id,
+      u.business_name,
+      COUNT(cp.id)::int as count
+    FROM users u
+    LEFT JOIN content_page cp ON cp.business_id = u.id
+      AND cp.category = 'ANNOUNCEMENT'
+      AND cp.publish >= $1 
+      AND cp.publish <= $2
+      AND EXISTS (
+        SELECT 1 FROM unnest(cp.labels) AS label WHERE label ILIKE '%Price Sensitive%'
+      )
+    WHERE u.user_type = 'BUSINESS'
+      AND u.deleted IS NOT TRUE
+      AND u.active = TRUE
+      ${businessFilter}
+    GROUP BY u.id, u.business_name
+    ORDER BY u.business_name`,
+    businessIds?.length 
+      ? [dateRange.startDate, dateRange.endDate, businessIds]
+      : [dateRange.startDate, dateRange.endDate]
+  );
+}
+
 export async function getAllValuableMoments(businessIds: number[] | null, dateRange: DateRange): Promise<ValuableMomentMetrics[]> {
-  const [emails, questions, socialPosts, content] = await Promise.all([
+  const [emails, questions, socialPosts, content, psAnnouncements] = await Promise.all([
     getEmailMetrics(businessIds, dateRange),
     getQuestionsMetrics(businessIds, dateRange),
     getSocialPostMetrics(businessIds, dateRange),
-    getContentMetrics(businessIds, dateRange)
+    getContentMetrics(businessIds, dateRange),
+    getPSAnnouncementsMetrics(businessIds, dateRange)
   ]);
 
   // Collect all unique businesses from all result sets
   const allBusinesses = new Map<number, { business_id: number; business_name: string }>();
   
-  [...emails, ...questions, ...socialPosts, ...content].forEach(business => {
+  [...emails, ...questions, ...socialPosts, ...content, ...psAnnouncements].forEach(business => {
     if (!allBusinesses.has(business.business_id)) {
       allBusinesses.set(business.business_id, {
         business_id: business.business_id,
@@ -150,11 +182,13 @@ export async function getAllValuableMoments(businessIds: number[] | null, dateRa
     const questionData = questions.find(q => q.business_id === business.business_id);
     const socialData = socialPosts.find(s => s.business_id === business.business_id);
     const contentData = content.find(c => c.business_id === business.business_id);
+    const psData = psAnnouncements.find(p => p.business_id === business.business_id);
 
     const emailsSent = emailData?.count || 0;
     const questionsAnswered = questionData?.count || 0;
     const socialPostsCount = socialData?.count || 0;
     const contentAdded = contentData?.count || 0;
+    const psAnnouncementsCount = psData?.count || 0;
 
     return {
       businessId: business.business_id,
@@ -163,6 +197,7 @@ export async function getAllValuableMoments(businessIds: number[] | null, dateRa
       questionsAnswered,
       socialPosts: socialPostsCount,
       contentAdded,
+      psAnnouncements: psAnnouncementsCount,
       totalVM: emailsSent + questionsAnswered + socialPostsCount + contentAdded
     };
   });
