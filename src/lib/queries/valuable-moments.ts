@@ -8,6 +8,8 @@ export interface ValuableMomentMetrics {
   socialPosts: number;
   contentAdded: number;
   psAnnouncements: number;
+  draftAnnouncements: number;
+  draftReports: number;
   totalVM: number;
 }
 
@@ -155,19 +157,73 @@ export async function getPSAnnouncementsMetrics(businessIds: number[] | null, da
   );
 }
 
+export async function getDraftAnnouncementsMetrics(businessIds: number[] | null, dateRange: DateRange) {
+  const businessFilter = businessIds?.length 
+    ? 'AND u.id = ANY($3)'
+    : '';
+
+  return query<{ business_id: number; business_name: string; count: number }>(
+    `SELECT 
+      u.id as business_id,
+      u.business_name,
+      COUNT(a.id)::int as count
+    FROM users u
+    LEFT JOIN asx_announcements a ON a.business_id = u.id
+      AND a.created_on >= $1 
+      AND a.created_on <= $2
+    WHERE u.user_type = 'BUSINESS'
+      AND u.deleted IS NOT TRUE
+      AND u.active = TRUE
+      ${businessFilter}
+    GROUP BY u.id, u.business_name
+    ORDER BY u.business_name`,
+    businessIds?.length 
+      ? [dateRange.startDate, dateRange.endDate, businessIds]
+      : [dateRange.startDate, dateRange.endDate]
+  );
+}
+
+export async function getDraftReportsMetrics(businessIds: number[] | null, dateRange: DateRange) {
+  const businessFilter = businessIds?.length 
+    ? 'AND u.id = ANY($3)'
+    : '';
+
+  return query<{ business_id: number; business_name: string; count: number }>(
+    `SELECT 
+      u.id as business_id,
+      u.business_name,
+      COUNT(r.id)::int as count
+    FROM users u
+    LEFT JOIN company_reports r ON r.business_id = u.id
+      AND r.created_on >= $1 
+      AND r.created_on <= $2
+    WHERE u.user_type = 'BUSINESS'
+      AND u.deleted IS NOT TRUE
+      AND u.active = TRUE
+      ${businessFilter}
+    GROUP BY u.id, u.business_name
+    ORDER BY u.business_name`,
+    businessIds?.length 
+      ? [dateRange.startDate, dateRange.endDate, businessIds]
+      : [dateRange.startDate, dateRange.endDate]
+  );
+}
+
 export async function getAllValuableMoments(businessIds: number[] | null, dateRange: DateRange): Promise<ValuableMomentMetrics[]> {
-  const [emails, questions, socialPosts, content, psAnnouncements] = await Promise.all([
+  const [emails, questions, socialPosts, content, psAnnouncements, draftAnnouncements, draftReports] = await Promise.all([
     getEmailMetrics(businessIds, dateRange),
     getQuestionsMetrics(businessIds, dateRange),
     getSocialPostMetrics(businessIds, dateRange),
     getContentMetrics(businessIds, dateRange),
-    getPSAnnouncementsMetrics(businessIds, dateRange)
+    getPSAnnouncementsMetrics(businessIds, dateRange),
+    getDraftAnnouncementsMetrics(businessIds, dateRange),
+    getDraftReportsMetrics(businessIds, dateRange)
   ]);
 
   // Collect all unique businesses from all result sets
   const allBusinesses = new Map<number, { business_id: number; business_name: string }>();
   
-  [...emails, ...questions, ...socialPosts, ...content, ...psAnnouncements].forEach(business => {
+  [...emails, ...questions, ...socialPosts, ...content, ...psAnnouncements, ...draftAnnouncements, ...draftReports].forEach(business => {
     if (!allBusinesses.has(business.business_id)) {
       allBusinesses.set(business.business_id, {
         business_id: business.business_id,
@@ -183,12 +239,16 @@ export async function getAllValuableMoments(businessIds: number[] | null, dateRa
     const socialData = socialPosts.find(s => s.business_id === business.business_id);
     const contentData = content.find(c => c.business_id === business.business_id);
     const psData = psAnnouncements.find(p => p.business_id === business.business_id);
+    const draftAnnData = draftAnnouncements.find(d => d.business_id === business.business_id);
+    const draftRepData = draftReports.find(d => d.business_id === business.business_id);
 
     const emailsSent = emailData?.count || 0;
     const questionsAnswered = questionData?.count || 0;
     const socialPostsCount = socialData?.count || 0;
     const contentAdded = contentData?.count || 0;
     const psAnnouncementsCount = psData?.count || 0;
+    const draftAnnouncementsCount = draftAnnData?.count || 0;
+    const draftReportsCount = draftRepData?.count || 0;
 
     return {
       businessId: business.business_id,
@@ -198,7 +258,9 @@ export async function getAllValuableMoments(businessIds: number[] | null, dateRa
       socialPosts: socialPostsCount,
       contentAdded,
       psAnnouncements: psAnnouncementsCount,
-      totalVM: emailsSent + questionsAnswered + socialPostsCount + contentAdded
+      draftAnnouncements: draftAnnouncementsCount,
+      draftReports: draftReportsCount,
+      totalVM: emailsSent + questionsAnswered + socialPostsCount + contentAdded + draftAnnouncementsCount + draftReportsCount
     };
   });
 } 

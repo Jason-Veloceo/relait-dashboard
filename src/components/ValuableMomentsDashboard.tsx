@@ -9,7 +9,7 @@ import BusinessSelector from './filters/BusinessSelector';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import ValuableMomentsChart from './ValuableMomentsChart';
 
-type SortField = 'businessName' | 'emailsSent' | 'socialPosts' | 'questionsAnswered' | 'contentAdded' | 'totalVM' | 'psAnnouncements';
+type SortField = 'businessName' | 'emailsSent' | 'socialPosts' | 'questionsAnswered' | 'contentAdded' | 'draftAnnouncements' | 'draftReports' | 'totalVM' | 'psAnnouncements';
 type SortDirection = 'asc' | 'desc';
 
 export default function ValuableMomentsDashboard() {
@@ -194,6 +194,26 @@ export default function ValuableMomentsDashboard() {
                 <th 
                   scope="col" 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('draftAnnouncements')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Draft Announcements</span>
+                    {getSortIcon('draftAnnouncements')}
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('draftReports')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Draft Reports</span>
+                    {getSortIcon('draftReports')}
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                   onClick={() => handleSort('totalVM')}
                 >
                   <div className="flex items-center space-x-1">
@@ -231,6 +251,8 @@ export default function ValuableMomentsDashboard() {
                   <td className="px-6 py-4 whitespace-nowrap">{metric.socialPosts}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.questionsAnswered}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.contentAdded}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{metric.draftAnnouncements}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{metric.draftReports}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.totalVM}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.psAnnouncements}</td>
                 </tr>
