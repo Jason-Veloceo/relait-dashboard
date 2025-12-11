@@ -248,7 +248,12 @@ export default function ValuableMomentsDashboard() {
                     </button>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.emailsSent}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{metric.socialPosts}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>{metric.socialPosts}</div>
+                    {'socialPostsRelait' in metric && typeof (metric as any).socialPostsRelait === 'number' ? (
+                      <div className="text-xs text-gray-500">R:{(metric as any).socialPostsRelait}</div>
+                    ) : null}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.questionsAnswered}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.contentAdded}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.draftAnnouncements}</td>

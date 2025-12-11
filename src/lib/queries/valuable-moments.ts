@@ -6,6 +6,7 @@ export interface ValuableMomentMetrics {
   emailsSent: number;
   questionsAnswered: number;
   socialPosts: number;
+  socialPostsRelait?: number;
   contentAdded: number;
   psAnnouncements: number;
   draftAnnouncements: number;
@@ -77,16 +78,17 @@ export async function getSocialPostMetrics(businessIds: number[] | null, dateRan
     ? 'AND u.id = ANY($3)'
     : '';
 
-  return query<{ business_id: number; business_name: string; count: number }>(
+  return query<{ business_id: number; business_name: string; count: number; relait_count: number }>(
     `SELECT 
       u.id as business_id,
       u.business_name,
-      COUNT(sp.id)::int as count
+      COUNT(sp.id)::int as count,
+      COALESCE(SUM(CASE WHEN sp.content_id IS NOT NULL THEN 1 ELSE 0 END), 0)::int as relait_count
     FROM users u
     LEFT JOIN social_post sp ON sp.business_id = u.id
       AND sp.status = 'POSTED'
-      AND sp.created_on >= $1 
-      AND sp.created_on <= $2
+      AND sp.posted_date >= $1 
+      AND sp.posted_date <= $2
     WHERE u.user_type = 'BUSINESS'
       AND u.deleted IS NOT TRUE
       AND u.active = TRUE
@@ -237,6 +239,7 @@ export async function getAllValuableMoments(businessIds: number[] | null, dateRa
     const emailData = emails.find(e => e.business_id === business.business_id);
     const questionData = questions.find(q => q.business_id === business.business_id);
     const socialData = socialPosts.find(s => s.business_id === business.business_id);
+    const socialRelait = socialPosts.find(s => s.business_id === business.business_id) as { business_id: number; business_name: string; count: number; relait_count: number } | undefined;
     const contentData = content.find(c => c.business_id === business.business_id);
     const psData = psAnnouncements.find(p => p.business_id === business.business_id);
     const draftAnnData = draftAnnouncements.find(d => d.business_id === business.business_id);
@@ -245,6 +248,7 @@ export async function getAllValuableMoments(businessIds: number[] | null, dateRa
     const emailsSent = emailData?.count || 0;
     const questionsAnswered = questionData?.count || 0;
     const socialPostsCount = socialData?.count || 0;
+    const socialPostsRelait = (socialRelait?.relait_count as number | undefined) || 0;
     const contentAdded = contentData?.count || 0;
     const psAnnouncementsCount = psData?.count || 0;
     const draftAnnouncementsCount = draftAnnData?.count || 0;
@@ -256,6 +260,7 @@ export async function getAllValuableMoments(businessIds: number[] | null, dateRa
       emailsSent,
       questionsAnswered,
       socialPosts: socialPostsCount,
+      socialPostsRelait,
       contentAdded,
       psAnnouncements: psAnnouncementsCount,
       draftAnnouncements: draftAnnouncementsCount,

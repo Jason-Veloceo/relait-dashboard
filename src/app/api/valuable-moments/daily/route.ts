@@ -51,14 +51,14 @@ export async function GET(request: Request) {
         
         -- Social Posts
         SELECT 
-          DATE(created_on) as date,
+          DATE(posted_date) as date,
           COUNT(*) as count,
           'social' as type
         FROM social_post
-        WHERE created_on >= CURRENT_DATE - INTERVAL '1 day' * $1
+        WHERE posted_date >= CURRENT_DATE - INTERVAL '1 day' * $1
         AND status = 'POSTED'
         ${businessFilter}
-        GROUP BY DATE(created_on)
+        GROUP BY DATE(posted_date)
         
         UNION ALL
         
