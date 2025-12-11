@@ -249,10 +249,18 @@ export default function ValuableMomentsDashboard() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.emailsSent}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div>{metric.socialPosts}</div>
-                    {'socialPostsRelait' in metric && typeof (metric as any).socialPostsRelait === 'number' ? (
-                      <div className="text-xs text-gray-500">R:{(metric as any).socialPostsRelait}</div>
-                    ) : null}
+                    {(() => {
+                      const relait = ('socialPostsRelait' in metric && typeof (metric as any).socialPostsRelait === 'number')
+                        ? (metric as any).socialPostsRelait as number
+                        : 0;
+                      const external = Math.max(0, (metric.socialPosts || 0) - relait);
+                      return (
+                        <>
+                          <div>{relait}</div>
+                          <div className="text-xs text-gray-500">Ext:{external}</div>
+                        </>
+                      );
+                    })()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.questionsAnswered}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{metric.contentAdded}</td>
