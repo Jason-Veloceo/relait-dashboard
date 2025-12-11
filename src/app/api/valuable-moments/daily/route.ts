@@ -57,6 +57,7 @@ export async function GET(request: Request) {
         FROM social_post
         WHERE posted_date >= CURRENT_DATE - INTERVAL '1 day' * $1
         AND status = 'POSTED'
+        AND content_id IS NOT NULL
         ${businessFilter}
         GROUP BY DATE(posted_date)
         

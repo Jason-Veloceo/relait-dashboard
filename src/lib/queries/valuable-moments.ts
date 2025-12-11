@@ -265,7 +265,7 @@ export async function getAllValuableMoments(businessIds: number[] | null, dateRa
       psAnnouncements: psAnnouncementsCount,
       draftAnnouncements: draftAnnouncementsCount,
       draftReports: draftReportsCount,
-      totalVM: emailsSent + questionsAnswered + socialPostsCount + contentAdded + draftAnnouncementsCount + draftReportsCount
+      totalVM: emailsSent + questionsAnswered + socialPostsRelait + contentAdded + draftAnnouncementsCount + draftReportsCount
     };
   });
 } 
